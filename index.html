@@ -5,330 +5,338 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR AR Experience</title>
   
-  <!-- 8th Wall Meta Tags -->
-  <meta name="8thwall:renderer" content="aframe:1.3.0">
-  <meta name="8thwall:package" content="@8thwall.xrextras">
-  <meta name="8thwall:package" content="@8thwall.landing-page">
-  <meta name="8thwall:package" content="@mrcs.holovideoobject:1.3.7">
-  
-  <!-- Microsoft HCAP Player -->
-  <script crossorigin="anonymous" src="https://cdn.dashjs.org/v4.0.1/dash.mediaplayer.min.js"></script>
-  
-  <!-- PWA Meta Tags for better mobile experience -->
-  <meta name="theme-color" content="#000000">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- A-Frame and AR.js for camera-based AR -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
   
   <style>
-    /* Enhanced styles for QR code experience */
     body {
       margin: 0;
-      padding: 0;
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
     }
 
-    .over {
-      z-index: 10;
-      pointer-events: none;
-      position: absolute;
+    .ar-overlay {
+      position: fixed;
       top: 0;
       left: 0;
-      bottom: 0;
-      right: 0;
-      text-align: center;
-      color: white;
-      font-family: 'Arial', sans-serif;
-      text-shadow: 0px 0px 8px rgba(0,0,0,0.8);
-    }
-
-    #promptText {
-      font-size: 1.5em;
-      bottom: 15vh;
-      position: absolute;
-      left: 50%;
-      transform: translate(-50%, 0);
-      padding: 0 20px;
-      line-height: 1.4;
-      max-width: 80vw;
-    }
-
-    #instructionText {
-      font-size: 1.2em;
-      top: 8vh;
-      position: absolute;
-      left: 50%;
-      transform: translate(-50%, 0);
-      padding: 10px 20px;
-      background: rgba(0,0,0,0.6);
-      border-radius: 10px;
-      max-width: 80vw;
-    }
-
-    .media-btn {
-      position: absolute;
-      pointer-events: auto;
-      width: 60px;
-      height: 60px;
-      bottom: 8vh;
-      background: rgba(0,0,0,0.7);
-      border-radius: 50%;
-      padding: 15px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    .media-btn:hover {
-      background: rgba(0,0,0,0.9);
-    }
-
-    .media-btn img {
       width: 100%;
       height: 100%;
-      filter: invert(1);
-    }
-
-    #pauseBtn {
-      left: 20px;
-    }
-
-    #muteBtn {
-      right: 20px;
-    }
-
-    #gradient-box {
-      background: linear-gradient(to bottom, 
-        rgba(0,0,0,0) 0%, 
-        rgba(0,0,0,0.3) 50%, 
-        rgba(0,0,0,0.7) 100%);
-      z-index: -1;
-      width: 100vw;
-      height: 25vh;
-      position: absolute;
-      bottom: 0;
-    }
-
-    /* Loading indicator */
-    .loading {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      pointer-events: none;
       z-index: 100;
     }
 
-    .spinner {
-      border: 4px solid rgba(255,255,255,0.3);
+    .instruction-text {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 25px;
+      text-align: center;
+      font-size: 16px;
+      max-width: 80%;
+      pointer-events: auto;
+    }
+
+    .bottom-controls {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      pointer-events: auto;
+    }
+
+    .control-btn {
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      border-top: 4px solid white;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
+      background: rgba(0,0,0,0.8);
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .control-btn:hover {
+      background: rgba(0,0,0,0.9);
     }
 
-    @media only screen and (min-width: 768px) {
-      #promptText {
-        font-size: 2em;
-      }
-      
-      #instructionText {
-        font-size: 1.4em;
-      }
+    .camera-error {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,0,0,0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 200;
+      max-width: 80%;
+    }
 
-      .media-btn {
-        width: 70px;
-        height: 70px;
-        bottom: 10vh;
-      }
+    .hidden {
+      display: none;
+    }
+
+    /* Hide A-Frame UI */
+    .a-enter-vr {
+      display: none !important;
     }
   </style>
 </head>
 
 <body>
-  <div class="over">
-    <div id="instructionText">Point your camera around to find surfaces</div>
-    <div id="promptText">Tap to place AR content</div>
-    
-    <div id="pauseBtn" class="media-btn" style="display: none;">
-      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M6 4h4v16H6V4zm8 0h4v16h-4V4z'/%3E%3C/svg%3E" alt="Pause">
+  <div class="ar-overlay">
+    <div class="instruction-text" id="instructions">
+      Point your camera at a surface and tap to place AR content
     </div>
     
-    <div id="muteBtn" class="media-btn" style="display: none;">
-      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'/%3E%3C/svg%3E" alt="Sound">
-    </div>
-    
-    <div id="gradient-box"></div>
-    
-    <div class="loading" id="loadingIndicator">
-      <div class="spinner"></div>
+    <div class="bottom-controls">
+      <button class="control-btn" id="resetBtn" title="Reset AR">
+        🔄
+      </button>
+      <button class="control-btn" id="toggleBtn" title="Toggle Animation">
+        ⏯️
+      </button>
     </div>
   </div>
 
+  <div class="camera-error hidden" id="cameraError">
+    <h3>Camera Access Needed</h3>
+    <p>Please allow camera access to use AR features</p>
+    <button onclick="location.reload()">Try Again</button>
+  </div>
+
   <a-scene
-    id="arScene"
-    xrextras-gesture-detector
-    landing-page
-    xrextras-loading
-    xrextras-runtime-error
-    renderer="antialias: true; colorManagement: false; physicallyCorrectLights: true; webgl2: true;"
-    xrweb="allowedDevices: any"
-    vr-mode-ui="enabled: false">
-
-    <a-camera
-      id="camera"
-      position="0 1.6 3"
-      raycaster="objects: .cantap"
-      cursor="fuse: false; rayOrigin: mouse;">
-    </a-camera>
+    embedded
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
     
-    <!-- Enhanced lighting setup -->
-    <a-entity
-      light="type: ambient; intensity: 0.4;">
+    <!-- Camera -->
+    <a-entity camera look-controls-enabled="false" arjs-look-controls="smoothingFactor: 0.1"></a-entity>
+    
+    <!-- Lighting -->
+    <a-light type="ambient" color="#404040" intensity="0.8"></a-light>
+    <a-light type="directional" position="0 10 5" color="#ffffff" intensity="1"></a-light>
+    
+    <!-- AR Content - Simple 3D objects that appear when you tap -->
+    <a-entity id="arContent" visible="false">
+      <!-- Main hologram placeholder -->
+      <a-cylinder 
+        id="mainObject"
+        position="0 1 -3" 
+        radius="0.5" 
+        height="2" 
+        color="#4CC3D9"
+        material="opacity: 0.8; transparent: true"
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 4000">
+        
+        <!-- Floating text -->
+        <a-text 
+          value="AR Experience" 
+          position="0 1.5 0" 
+          align="center" 
+          color="white" 
+          scale="1.5 1.5 1.5">
+        </a-text>
+        
+        <!-- Orbiting spheres -->
+        <a-sphere 
+          position="2 0 0" 
+          radius="0.2" 
+          color="#EF2D5E"
+          animation="property: rotation; to: 0 360 0; loop: true; dur: 2000; easing: linear">
+        </a-sphere>
+        
+        <a-sphere 
+          position="-2 0 0" 
+          radius="0.2" 
+          color="#FFC65D"
+          animation="property: rotation; to: 0 -360 0; loop: true; dur: 3000; easing: linear">
+        </a-sphere>
+      </a-cylinder>
+      
+      <!-- Additional floating elements -->
+      <a-box 
+        position="2 0.5 -3" 
+        rotation="45 45 45" 
+        width="0.5" 
+        height="0.5" 
+        depth="0.5" 
+        color="#7BC8A4"
+        animation="property: position; to: 2 2 -3; dir: alternate; loop: true; dur: 2000">
+      </a-box>
+      
+      <a-octahedron 
+        position="-2 0.5 -3" 
+        radius="0.3" 
+        color="#FF6B6B"
+        animation="property: rotation; to: 360 360 360; loop: true; dur: 5000">
+      </a-octahedron>
     </a-entity>
-    
-    <a-entity
-      light="type: directional;
-             intensity: 0.8;
-             castShadow: true;
-             shadowMapHeight: 2048;
-             shadowMapWidth: 2048;
-             shadowCameraTop: 10;
-             target: #holo;"
-      xrextras-attach="target: holo; offset: 0 15 0;"
-      shadow>
-    </a-entity>
 
-    <!-- Your hologram content - replace with your own assets -->
-    <hcap-hologram
-      id="holo" 
-      src="./assets/FemalePresenter.hcap"
-      size="1.5"
-      visible="false"
-      xrextras-hold-drag
-      xrextras-two-finger-rotate 
-      xrextras-pinch-scale="min: 0.5; max: 10">
-    </hcap-hologram>
-    
-    <!-- Alternative fallback content if HCAP doesn't load -->
-    <a-box
-      id="fallback-content"
-      width="1"
-      height="2"
-      depth="0.5"
-      color="#4CC3D9"
-      material="opacity: 0.8; transparent: true"
-      animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"
-      visible="false">
-      <a-text
-        value="AR Content"
-        position="0 1.2 0.26"
-        align="center"
-        color="white"
-        scale="2 2 2">
-      </a-text>
-    </a-box>
-    
-    <!-- Tap target plane -->
-    <a-entity
+    <!-- Ground plane for raycasting -->
+    <a-plane 
       id="ground"
-      class="cantap"
-      geometry="primitive: plane; width: 1000; height: 1000"
-      material="shader: shadow; transparent: true; opacity: 0.1"
-      rotation="-90 0 0"
-      position="0 0 0"
-      shadow="receive: true">
-    </a-entity>
+      position="0 0 -4" 
+      rotation="-90 0 0" 
+      width="100" 
+      height="100" 
+      color="#7BC8A4" 
+      material="opacity: 0.1; transparent: true"
+      class="clickable">
+    </a-plane>
   </a-scene>
 
-  <script type="module">
-    // Enhanced AR experience logic
-    let hologramPlaced = false;
-    let currentHologram = null;
-    
+  <script>
+    let arPlaced = false;
+    let animationPaused = false;
+
+    // Check for camera support
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      document.getElementById('cameraError').classList.remove('hidden');
+    }
+
     // Wait for scene to load
-    document.querySelector('#arScene').addEventListener('loaded', () => {
+    document.querySelector('a-scene').addEventListener('loaded', function() {
       console.log('AR Scene loaded');
-      hideLoading();
+      
+      // Handle camera permission
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+          console.log('Camera access granted');
+          stream.getTracks().forEach(track => track.stop()); // Stop the test stream
+        })
+        .catch(function(error) {
+          console.error('Camera access denied:', error);
+          document.getElementById('cameraError').classList.remove('hidden');
+        });
     });
 
-    // Handle tap to place
-    document.querySelector('#ground').addEventListener('click', (event) => {
-      if (!hologramPlaced) {
-        placeHologram(event.detail.intersection.point);
+    // Handle tap to place AR content
+    document.querySelector('#ground').addEventListener('click', function(evt) {
+      if (!arPlaced) {
+        const arContent = document.querySelector('#arContent');
+        arContent.setAttribute('visible', 'true');
+        arPlaced = true;
+        
+        document.getElementById('instructions').textContent = 
+          'AR content placed! Move your device to explore';
+        
+        console.log('AR content placed');
       }
     });
 
-    function placeHologram(position) {
-      const holo = document.querySelector('#holo');
-      const fallback = document.querySelector('#fallback-content');
+    // Touch events for mobile
+    let touchStartTime = 0;
+    document.addEventListener('touchstart', function(evt) {
+      touchStartTime = Date.now();
+    });
+
+    document.addEventListener('touchend', function(evt) {
+      const touchDuration = Date.now() - touchStartTime;
       
-      if (holo) {
-        holo.setAttribute('position', `${position.x} ${position.y + 1} ${position.z}`);
-        holo.setAttribute('visible', 'true');
-        currentHologram = holo;
+      // Short tap to place content
+      if (touchDuration < 300 && !arPlaced) {
+        const arContent = document.querySelector('#arContent');
+        arContent.setAttribute('visible', 'true');
+        arPlaced = true;
+        
+        document.getElementById('instructions').textContent = 
+          'AR content placed! Move your device to explore';
+        
+        console.log('AR content placed via touch');
+      }
+    });
+
+    // Control buttons
+    document.getElementById('resetBtn').addEventListener('click', function() {
+      const arContent = document.querySelector('#arContent');
+      arContent.setAttribute('visible', 'false');
+      arPlaced = false;
+      
+      document.getElementById('instructions').textContent = 
+        'Point your camera at a surface and tap to place AR content';
+      
+      console.log('AR reset');
+    });
+
+    document.getElementById('toggleBtn').addEventListener('click', function() {
+      const mainObject = document.querySelector('#mainObject');
+      const boxes = document.querySelectorAll('a-box, a-octahedron, a-sphere');
+      
+      if (animationPaused) {
+        // Resume animations
+        mainObject.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 4000');
+        boxes.forEach(box => {
+          const currentAnimation = box.getAttribute('animation');
+          if (currentAnimation) {
+            box.setAttribute('animation', currentAnimation);
+          }
+        });
+        animationPaused = false;
+        console.log('Animations resumed');
       } else {
-        // Use fallback if HCAP content not available
-        fallback.setAttribute('position', `${position.x} ${position.y + 1} ${position.z}`);
-        fallback.setAttribute('visible', 'true');
-        currentHologram = fallback;
-      }
-      
-      hologramPlaced = true;
-      updateUI();
-    }
-
-    function updateUI() {
-      const promptText = document.querySelector('#promptText');
-      const instructionText = document.querySelector('#instructionText');
-      const pauseBtn = document.querySelector('#pauseBtn');
-      const muteBtn = document.querySelector('#muteBtn');
-      
-      if (hologramPlaced) {
-        promptText.textContent = 'Drag to move • Pinch to scale • Rotate with two fingers';
-        instructionText.style.display = 'none';
-        pauseBtn.style.display = 'block';
-        muteBtn.style.display = 'block';
-      }
-    }
-
-    function hideLoading() {
-      const loadingIndicator = document.querySelector('#loadingIndicator');
-      if (loadingIndicator) {
-        loadingIndicator.style.display = 'none';
-      }
-    }
-
-    // Media controls
-    document.querySelector('#pauseBtn').addEventListener('click', () => {
-      const holoComponent = currentHologram?.components?.hcap;
-      if (holoComponent) {
-        holoComponent.togglePlay();
+        // Pause animations
+        mainObject.removeAttribute('animation');
+        boxes.forEach(box => {
+          box.removeAttribute('animation');
+        });
+        animationPaused = true;
+        console.log('Animations paused');
       }
     });
 
-    document.querySelector('#muteBtn').addEventListener('click', () => {
-      const holoComponent = currentHologram?.components?.hcap;
-      if (holoComponent) {
-        holoComponent.toggleMute();
+    // Handle different QR code parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const experience = urlParams.get('experience');
+    const qrId = urlParams.get('qr');
+    
+    if (qrId) {
+      console.log('Launched from QR code:', qrId);
+    }
+    
+    // Different content based on experience parameter
+    if (experience) {
+      switch(experience) {
+        case 'demo1':
+          document.querySelector('#mainObject').setAttribute('color', '#FF6B6B');
+          document.querySelector('a-text').setAttribute('value', 'Demo 1 Experience');
+          break;
+        case 'demo2':
+          document.querySelector('#mainObject').setAttribute('color', '#4ECDC4');
+          document.querySelector('a-text').setAttribute('value', 'Demo 2 Experience');
+          break;
+        case 'museum':
+          document.querySelector('#mainObject').setAttribute('color', '#45B7D1');
+          document.querySelector('a-text').setAttribute('value', 'Museum Guide');
+          break;
+        default:
+          // Default content already set
+          break;
       }
+    }
+
+    // Error handling
+    window.addEventListener('error', function(event) {
+      console.error('AR Error:', event.error);
     });
 
-    // Handle device orientation changes
-    window.addEventListener('orientationchange', () => {
-      setTimeout(() => {
-        const scene = document.querySelector('#arScene');
-        if (scene) {
-          scene.resize();
-        }
+    // Orientation change handling
+    window.addEventListener('orientationchange', function() {
+      setTimeout(function() {
+        window.location.reload();
       }, 500);
     });
-
-    // Analytics (optional - replace with your analytics)
-    console.log('QR AR Experience started');
   </script>
 </body>
 </html>
