@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simple QR AR Experience</title>
+  <title>AR Experience</title>
   
   <!-- AR.js library for camera-based AR - no registration needed -->
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
@@ -94,13 +94,12 @@
   <div class="ui-overlay">
     <!-- Instructions that change based on state -->
     <div class="instructions" id="instructions">
-      Tap anywhere to place AR content
+      Tap anywhere to place AR text
     </div>
     
     <!-- Control buttons -->
     <div class="controls">
       <button class="btn" id="resetBtn" title="Reset">🔄</button>
-      <button class="btn" id="pauseBtn" title="Pause">⏸️</button>
     </div>
   </div>
 
@@ -121,48 +120,23 @@
     <a-camera look-controls-enabled="false" arjs-look-controls></a-camera>
     
     <!-- Lighting for 3D objects -->
-    <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
-    <a-light type="directional" position="0 5 2" intensity="0.8"></a-light>
+    <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
+    <a-light type="directional" position="0 5 2" intensity="1.0"></a-light>
     
     <!-- AR Content Group - hidden until placed -->
     <a-entity id="arContent" visible="false" position="0 0 -3">
       
-      <!-- Main spinning cylinder -->
-      <a-cylinder 
-        id="mainShape"
-        radius="0.5" 
-        height="2" 
-        color="#4CC3D9"
-        material="opacity: 0.8; transparent: true"
-        animation="property: rotation; to: 0 360 0; loop: true; dur: 4000">
-        
-        <!-- Text label -->
-        <a-text 
-          value="AR Experience" 
-          position="0 1.5 0" 
-          align="center" 
-          color="white" 
-          scale="1.5 1.5 1.5">
-        </a-text>
-      </a-cylinder>
+      <!-- Only the text label - no geometric shapes -->
+      <a-text 
+        id="mainText"
+        value="To Scan is to Exist" 
+        position="0 1 0" 
+        align="center" 
+        color="white" 
+        scale="2 2 2"
+        material="shader: msdf; font: roboto;">
+      </a-text>
       
-      <!-- Floating cube -->
-      <a-box 
-        position="2 0.5 0" 
-        width="0.5" 
-        height="0.5" 
-        depth="0.5" 
-        color="#7BC8A4"
-        animation="property: position; to: 2 2 0; dir: alternate; loop: true; dur: 2000">
-      </a-box>
-      
-      <!-- Spinning shape -->
-      <a-octahedron 
-        position="-2 0.5 0" 
-        radius="0.3" 
-        color="#FF6B6B"
-        animation="property: rotation; to: 360 360 360; loop: true; dur: 3000">
-      </a-octahedron>
     </a-entity>
 
     <!-- Invisible plane for detecting taps -->
@@ -182,7 +156,6 @@
     // GLOBAL VARIABLES
     // ===========================================
     let isARPlaced = false;        // Track if AR content is visible
-    let isAnimationPaused = false; // Track animation state
 
     // ===========================================
     // INITIALIZATION
@@ -258,9 +231,9 @@
       
       // Update state and UI
       isARPlaced = true;
-      updateInstructions('AR content placed! Move your device to explore');
+      updateInstructions('AR text placed! Move your device to explore');
       
-      console.log('AR content placed successfully');
+      console.log('AR text placed successfully');
     }
 
     // ===========================================
@@ -273,38 +246,10 @@
       arContent.setAttribute('visible', 'false');
       
       isARPlaced = false;
-      updateInstructions('Tap anywhere to place AR content');
+      updateInstructions('Tap anywhere to place AR text');
       
       console.log('AR content reset');
     });
-
-    // Pause button - toggle animations
-    document.getElementById('pauseBtn').addEventListener('click', function() {
-      toggleAnimations();
-    });
-
-    function toggleAnimations() {
-      const animatedElements = document.querySelectorAll('[animation]');
-      
-      if (isAnimationPaused) {
-        // Resume animations
-        animatedElements.forEach(element => {
-          const animation = element.getAttribute('animation');
-          element.setAttribute('animation', animation);
-        });
-        isAnimationPaused = false;
-        document.getElementById('pauseBtn').textContent = '⏸️';
-        console.log('Animations resumed');
-      } else {
-        // Pause animations
-        animatedElements.forEach(element => {
-          element.removeAttribute('animation');
-        });
-        isAnimationPaused = true;
-        document.getElementById('pauseBtn').textContent = '▶️';
-        console.log('Animations paused');
-      }
-    }
 
     function updateInstructions(text) {
       document.getElementById('instructions').textContent = text;
@@ -326,30 +271,29 @@
     
     // Customize content based on experience parameter
     function customizeExperience() {
-      const mainShape = document.getElementById('mainShape');
-      const textLabel = document.querySelector('a-text');
+      const textLabel = document.getElementById('mainText');
       
       switch(experience) {
         case 'demo1':
-          mainShape.setAttribute('color', '#FF6B6B');
           textLabel.setAttribute('value', 'Demo 1');
-          updateInstructions('Demo 1: Tap to place red AR content');
+          textLabel.setAttribute('color', '#FF6B6B'); // Red text
+          updateInstructions('Demo 1: Tap to place red text');
           break;
           
         case 'demo2':
-          mainShape.setAttribute('color', '#4ECDC4');
           textLabel.setAttribute('value', 'Demo 2');
-          updateInstructions('Demo 2: Tap to place teal AR content');
+          textLabel.setAttribute('color', '#4ECDC4'); // Teal text
+          updateInstructions('Demo 2: Tap to place teal text');
           break;
           
         case 'museum':
-          mainShape.setAttribute('color', '#45B7D1');
           textLabel.setAttribute('value', 'Museum Guide');
+          textLabel.setAttribute('color', '#45B7D1'); // Blue text
           updateInstructions('Museum: Tap to place your virtual guide');
           break;
           
         default:
-          // Keep default blue color and text
+          // Keep default white text
           break;
       }
     }
