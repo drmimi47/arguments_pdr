@@ -1,12 +1,143 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Simple Website</title>
-  <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QR AR Experience</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.8thwall.com/web/aframe/8frame-1.4.0.min.js"></script>
+    <script>
+        // Custom component to handle QR code detection and content spawning
+        AFRAME.registerComponent('qr-ar-content', {
+            init: function() {
+                this.spawned = false;
+                this.contentContainer = null;
+                
+                // Listen for image target found (your QR code)
+                this.el.addEventListener('xrimagefound', this.onImageFound.bind(this));
+                this.el.addEventListener('xrimagelost', this.onImageLost.bind(this));
+            },
+            
+            onImageFound: function(event) {
+                if (!this.spawned) {
+                    this.spawnARContent();
+                    this.spawned = true;
+                }
+                
+                if (this.contentContainer) {
+                    this.contentContainer.setAttribute('visible', true);
+                }
+            },
+            
+            onImageLost: function(event) {
+                if (this.contentContainer) {
+                    this.contentContainer.setAttribute('visible', false);
+                }
+            },
+            
+            spawnARContent: function() {
+                const scene = document.querySelector('a-scene');
+                
+                // Create container for all AR content
+                this.contentContainer = document.createElement('a-entity');
+                this.contentContainer.setAttribute('id', 'ar-content');
+                
+                // Add floating text above QR code
+                const titleText = document.createElement('a-text');
+                titleText.setAttribute('value', 'Welcome to AR Experience!');
+                titleText.setAttribute('position', '0 0.3 0');
+                titleText.setAttribute('align', 'center');
+                titleText.setAttribute('color', '#FF6B35');
+                titleText.setAttribute('scale', '0.8 0.8 0.8');
+                titleText.setAttribute('animation', 'property: position; to: 0 0.5 0; dur: 2000; dir: alternate; loop: true');
+                this.contentContainer.appendChild(titleText);
+                
+                // Add description text
+                const descText = document.createElement('a-text');
+                descText.setAttribute('value', 'Scan complete! Explore around the object');
+                descText.setAttribute('position', '0 0.1 0');
+                descText.setAttribute('align', 'center');
+                descText.setAttribute('color', '#2E86AB');
+                descText.setAttribute('scale', '0.4 0.4 0.4');
+                this.contentContainer.appendChild(descText);
+                
+                // Add floating shapes with text
+                this.createFloatingShape('cube', '0.3 0.2 0.2', '#F24236', 'Info 1');
+                this.createFloatingShape('sphere', '-0.3 0.2 0.2', '#A23B72', 'Info 2');
+                this.createFloatingShape('cylinder', '0 0.2 0.4', '#F18F01', 'Info 3');
+                
+                // Add the container to the image target
+                this.el.appendChild(this.contentContainer);
+            },
+            
+            createFloatingShape: function(geometry, position, color, textContent) {
+                // Create shape
+                const shape = document.createElement('a-entity');
+                shape.setAttribute('geometry', `primitive: ${geometry}; radius: 0.05; height: 0.1; width: 0.1; depth: 0.1`);
+                shape.setAttribute('material', `color: ${color}; opacity: 0.8`);
+                shape.setAttribute('position', position);
+                shape.setAttribute('animation', 'property: rotation; to: 0 360 0; dur: 4000; loop: true');
+                
+                // Add text label near shape
+                const label = document.createElement('a-text');
+                label.setAttribute('value', textContent);
+                label.setAttribute('position', '0 0.15 0');
+                label.setAttribute('align', 'center');
+                label.setAttribute('color', '#FFFFFF');
+                label.setAttribute('scale', '0.3 0.3 0.3');
+                shape.appendChild(label);
+                
+                // Add click interaction
+                shape.setAttribute('cursor-listener', '');
+                shape.addEventListener('click', function() {
+                    alert(`You clicked: ${textContent}`);
+                });
+                
+                this.contentContainer.appendChild(shape);
+            }
+        });
+        
+        // Simple cursor interaction component
+        AFRAME.registerComponent('cursor-listener', {
+            init: function () {
+                this.el.addEventListener('click', function (evt) {
+                    console.log('Shape clicked!');
+                });
+            }
+        });
+    </script>
 </head>
 <body>
-  <h1>Welcome to My Website!</h1>
-  <p>This is a simple webpage made with HTML.</p>
-  <a href="https://example.com">Visit Example</a>
+    <a-scene
+        xrweb="allowedDevices: any"
+        xrextras-almost-there
+        xrextras-loading
+        xrextras-runtime-error>
+        
+        <!-- Assets -->
+        <a-assets>
+            <!-- Replace 'your-qr-code.jpg' with your actual QR code image -->
+            <img id="qr-target" src="qrcode.jpeg">
+        </a-assets>
+        
+        <!-- Camera with raycaster for interactions -->
+        <a-camera
+            id="camera"
+            position="0 0 0"
+            raycaster="objects: [cursor-listener]; far: 10"
+            cursor="rayOrigin: mouse">
+        </a-camera>
+        
+        <!-- Image target (your QR code) -->
+        <a-entity
+            id="image-target"
+            xrextras-named-image-target="name: qr-target"
+            qr-ar-content>
+        </a-entity>
+        
+        <!-- Lighting -->
+        <a-light type="ambient" intensity="0.4"></a-light>
+        <a-light type="directional" position="2 4 5" intensity="0.4"></a-light>
+    </a-scene>
 </body>
 </html>
