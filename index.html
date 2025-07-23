@@ -42,7 +42,7 @@
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-    /*background: rgba(0,0,0,0.8); */
+      background: rgba(0,0,0,0.8);
       color: white;
       padding: 15px 25px;
       border-radius: 25px;
@@ -97,15 +97,15 @@
       pointer-events: auto; /* Allow button clicks */
     }
 
-    /* Individual button styling */
+    /* Individual reset button styling */
     .btn {
       width: 60px;
       height: 60px;
       border-radius: 50%;
-/*    background: rgba(0,0,0,0.8); */      
+      background: rgba(0,0,0,0.8);    
       border: none;
       color: white;
-      font-size: 24px;
+      font-size: 12px;
       cursor: pointer;
     }
 
@@ -151,7 +151,7 @@
     
     <!-- Control buttons -->
     <div class="controls">
-      <button class="btn" id="resetBtn" title="Reset">🔄</button>
+      <button class="btn" id="resetBtn" title="Reset">Reset</button>
     </div>
   </div>
 
@@ -287,9 +287,9 @@
       
       // Update state and UI
       isARPlaced = true;
-      updateInstructions('AR text placed! Move your device to explore');
+      updateInstructions('Data unencrypted. Move your device to explore.');
       
-      console.log('AR text placed successfully');
+      console.log('Data unencrypted. Move your device to explore.');
     }
 
     // ===========================================
