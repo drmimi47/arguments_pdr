@@ -105,7 +105,7 @@
       background: rgba(0,0,0,0.8);    
       border: none;
       color: white;
-      font-size: 12px;
+      font-size: 16px;
       cursor: pointer;
     }
 
@@ -143,7 +143,7 @@
   <div class="ui-overlay">
     <!-- Instructions that change based on state -->
     <div class="instructions" id="instructions">
-      Point camera to object.
+      Point camera to object
     </div>
     
     <!-- Pulsating circle in center (hidden after AR is placed) -->
@@ -287,9 +287,9 @@
       
       // Update state and UI
       isARPlaced = true;
-      updateInstructions('Data unencrypted. Move your device to explore.');
+      updateInstructions('Data unencrypted, Move your device to explore');
       
-      console.log('Data unencrypted. Move your device to explore.');
+      console.log('Data unencrypted, Move your device to explore');
     }
 
     // ===========================================
@@ -306,7 +306,7 @@
       pulseCircle.style.display = 'block';
       
       isARPlaced = false;
-      updateInstructions('Point camera to find surfaces');
+      updateInstructions('Point camera to object');
       
       console.log('AR content reset');
     });
