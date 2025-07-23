@@ -186,7 +186,8 @@
         align="center" 
         color="white" 
         scale="1.25 1.25 1.25"
-        material="shader: msdf; font: roboto;">
+        material="shader: msdf; font: roboto;"
+        visible="true">
       </a-text>
       
       <!-- Second text that will appear after fade -->
@@ -197,7 +198,8 @@
         align="center" 
         color="white" 
         scale="1.25 1.25 1.25"
-        material="shader: msdf; font: roboto; opacity: 0">
+        material="shader: msdf; font: roboto;"
+        visible="false">
       </a-text>
       
     </a-entity>
@@ -319,32 +321,20 @@
       
       console.log('Starting text animation...');
       
-      // After 3 seconds, fade out first text and fade in second text
+      // After 3 seconds, hide first text and show second text
       setTimeout(() => {
-        // Fade out first text
-        mainText.setAttribute('animation', {
-          property: 'material.opacity',
-          from: 1,
-          to: 0,
-          dur: 1000,
-          easing: 'easeInOutQuad'
-        });
+        console.log('Switching from first text to second text');
         
-        // Fade in second text with slight delay
-        setTimeout(() => {
-          secondText.setAttribute('animation', {
-            property: 'material.opacity',
-            from: 0,
-            to: 1,
-            dur: 1000,
-            easing: 'easeInOutQuad'
-          });
-          
-          textAnimationComplete = true;
-          console.log('Text animation completed');
-        }, 500); // 0.5 second delay between fade out and fade in
+        // Hide first text instantly
+        mainText.setAttribute('visible', 'false');
         
-      }, 3000); // Wait 3 seconds before starting fade
+        // Show second text instantly
+        secondText.setAttribute('visible', 'true');
+        
+        textAnimationComplete = true;
+        console.log('Text animation completed');
+        
+      }, 3000); // Wait 3 seconds before switching
     }
 
     // ===========================================
@@ -364,11 +354,9 @@
       const mainText = document.getElementById('mainText');
       const secondText = document.getElementById('secondText');
       
-      // Remove any animations and reset opacity
-      mainText.removeAttribute('animation');
-      secondText.removeAttribute('animation');
-      mainText.setAttribute('material', 'opacity: 1');
-      secondText.setAttribute('material', 'opacity: 0');
+      // Reset visibility states
+      mainText.setAttribute('visible', 'true');
+      secondText.setAttribute('visible', 'false');
       
       isARPlaced = false;
       textAnimationComplete = false;
