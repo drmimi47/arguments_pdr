@@ -10,12 +10,18 @@
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
   
   <style>
+    /* ========================================
+       BASIC PAGE SETUP
+       ======================================== */
     /* Basic reset and font */
     body {
       margin: 0;
       font-family: Arial, sans-serif;
     }
 
+    /* ========================================
+       UI OVERLAY - Elements on top of camera
+       ======================================== */
     /* Container for all UI elements overlaid on camera */
     .ui-overlay {
       position: fixed;
@@ -27,13 +33,16 @@
       z-index: 100;
     }
 
+    /* ========================================
+       INSTRUCTION TEXT - Top of screen
+       ======================================== */
     /* Instruction text at top of screen */
     .instructions {
       position: absolute;
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.8);
+    /*background: rgba(0,0,0,0.8); */
       color: white;
       padding: 15px 25px;
       border-radius: 25px;
@@ -43,6 +52,9 @@
       pointer-events: auto; /* Allow interaction with this element */
     }
 
+    /* ========================================
+       PULSATING CIRCLE - Center target
+       ======================================== */
     /* Pulsating circle in center of screen */
     .pulse-circle {
       position: absolute;
@@ -58,6 +70,7 @@
       pointer-events: none;
     }
 
+    /* Animation for pulsating effect */
     @keyframes pulse {
       0% {
         transform: translate(-50%, -50%) scale(1);
@@ -89,13 +102,16 @@
       width: 60px;
       height: 60px;
       border-radius: 50%;
-      background: rgba(0,0,0,0.8);
+/*    background: rgba(0,0,0,0.8); */      
       border: none;
       color: white;
-      font-size: 12px;
+      font-size: 24px;
       cursor: pointer;
     }
 
+    /* ========================================
+       ERROR MESSAGES - Camera issues
+       ======================================== */
     /* Error message if camera fails */
     .error {
       position: fixed;
@@ -112,6 +128,9 @@
       display: none; /* Hidden by default */
     }
 
+    /* ========================================
+       HIDE DEFAULT A-FRAME ELEMENTS
+       ======================================== */
     /* Hide A-Frame's default VR button */
     .a-enter-vr {
       display: none !important;
@@ -124,7 +143,7 @@
   <div class="ui-overlay">
     <!-- Instructions that change based on state -->
     <div class="instructions" id="instructions">
-      Point camera to digitally-gated object.
+      Point camera to object.
     </div>
     
     <!-- Pulsating circle in center (hidden after AR is placed) -->
@@ -132,7 +151,7 @@
     
     <!-- Control buttons -->
     <div class="controls">
-      <button class="btn" id="resetBtn" title="Reset">Reset</button>
+      <button class="btn" id="resetBtn" title="Reset">🔄</button>
     </div>
   </div>
 
@@ -162,11 +181,11 @@
       <!-- Only the text label - no geometric shapes -->
       <a-text 
         id="mainText"
-        value="To Exist is to Scan" 
+        value="To scan is to exist." 
         position="0 1 0" 
         align="center" 
         color="white" 
-        scale="2 2 2"
+        scale="1.25 1.25 1.25"
         material="shader: msdf; font: roboto;">
       </a-text>
       
@@ -268,7 +287,7 @@
       
       // Update state and UI
       isARPlaced = true;
-      updateInstructions('What was hidden is now revealed'<br>'Move camera to explore');
+      updateInstructions('AR text placed! Move your device to explore');
       
       console.log('AR text placed successfully');
     }
@@ -287,7 +306,7 @@
       pulseCircle.style.display = 'block';
       
       isARPlaced = false;
-      updateInstructions('Point camera to digitally-gated object.');
+      updateInstructions('Point camera to find surfaces');
       
       console.log('AR content reset');
     });
@@ -314,6 +333,11 @@
     function customizeExperience() {
       const textLabel = document.getElementById('mainText');
       
+      // ==========================================
+      // QR CODE CUSTOMIZATION - Different experiences
+      // ==========================================
+      // EDIT HERE: Add new QR code experiences
+      
       switch(experience) {
         case 'demo1':
           textLabel.setAttribute('value', 'Demo 1');
@@ -334,7 +358,7 @@
           break;
           
         default:
-          // Keep default white text
+          // Keep default white text and instructions
           break;
       }
     }
