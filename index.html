@@ -214,10 +214,7 @@
         visible="false">
       </a-text>
 
-
     </a-entity>
-
-
 
     <!-- Invisible plane for detecting taps -->
     <a-plane 
@@ -335,25 +332,24 @@
       const secondText = document.getElementById('secondText');
       const thirdText = document.getElementById('thirdText');
       
-      console.log('Starting text animation...');
+      console.log('Starting text animation sequence...');
       
-      // After seconds, hide first text and show second text
+      // Step 1: After 7 seconds, hide first text and show second text
       setTimeout(() => {
-        console.log('Switching from first text to second text');
-        
-        // Hide first text instantly
+        console.log('Step 1: Switching from first text to second text');
         mainText.setAttribute('visible', 'false');
-        
-        // Show second text instantly
         secondText.setAttribute('visible', 'true');
-
+      }, 7000); // Wait 7 seconds before switching to second text
+      
+      // Step 2: After another 7 seconds, hide second text and show third text
+      setTimeout(() => {
+        console.log('Step 2: Switching from second text to third text');
         secondText.setAttribute('visible', 'false');
         thirdText.setAttribute('visible', 'true');
         
         textAnimationComplete = true;
-        console.log('Text animation completed');
-        
-      }, 7000); // Wait seconds before switching
+        console.log('Text animation sequence completed');
+      }, 12000); // Wait total of 14 seconds (7 + 7) before switching to third text
     }
 
     // ===========================================
@@ -374,7 +370,7 @@
       const secondText = document.getElementById('secondText');
       const thirdText = document.getElementById('thirdText');
       
-      // Reset visibility states
+      // Reset visibility states to initial conditions
       mainText.setAttribute('visible', 'true');
       secondText.setAttribute('visible', 'false');
       thirdText.setAttribute('visible', 'false');
