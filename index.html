@@ -92,7 +92,7 @@
       background: rgba(0,0,0,0.8);
       border: none;
       color: white;
-      font-size: 24px;
+      font-size: 12px;
       cursor: pointer;
     }
 
@@ -124,7 +124,7 @@
   <div class="ui-overlay">
     <!-- Instructions that change based on state -->
     <div class="instructions" id="instructions">
-      Point camera to find surfaces
+      Point camera to digitally-gated object.
     </div>
     
     <!-- Pulsating circle in center (hidden after AR is placed) -->
@@ -162,7 +162,7 @@
       <!-- Only the text label - no geometric shapes -->
       <a-text 
         id="mainText"
-        value="AR Experience" 
+        value="To Exist is to Scan" 
         position="0 1 0" 
         align="center" 
         color="white" 
@@ -268,7 +268,7 @@
       
       // Update state and UI
       isARPlaced = true;
-      updateInstructions('AR text placed! Move your device to explore');
+      updateInstructions('What was hidden is now revealed'<br>'Move camera to explore');
       
       console.log('AR text placed successfully');
     }
@@ -287,7 +287,7 @@
       pulseCircle.style.display = 'block';
       
       isARPlaced = false;
-      updateInstructions('Point camera to find surfaces');
+      updateInstructions('Point camera to digitally-gated object.');
       
       console.log('AR content reset');
     });
