@@ -185,7 +185,7 @@
         position="0 1 0" 
         align="center" 
         color="white" 
-        scale="1.25 1.25 1.25"
+        scale="1.15 1.15 1.15"
         material="shader: msdf; font: roboto;"
         visible="true">
       </a-text>
@@ -193,16 +193,18 @@
       <!-- Second text that will appear after fade -->
       <a-text 
         id="secondText"
-        value="paragraph" 
+        value="Object (noun)\nA material thing that can be seen and touched." 
         position="0 1 0" 
         align="center" 
         color="white" 
-        scale="1.25 1.25 1.25"
+        scale="0.65 0.65 0.65"
         material="shader: msdf; font: roboto;"
         visible="false">
       </a-text>
       
     </a-entity>
+
+
 
     <!-- Invisible plane for detecting taps -->
     <a-plane 
@@ -321,7 +323,7 @@
       
       console.log('Starting text animation...');
       
-      // After 3 seconds, hide first text and show second text
+      // After seconds, hide first text and show second text
       setTimeout(() => {
         console.log('Switching from first text to second text');
         
@@ -334,7 +336,7 @@
         textAnimationComplete = true;
         console.log('Text animation completed');
         
-      }, 3000); // Wait 3 seconds before switching
+      }, 5000); // Wait seconds before switching
     }
 
     // ===========================================
