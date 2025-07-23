@@ -178,7 +178,7 @@
     <!-- AR Content Group - hidden until placed -->
     <a-entity id="arContent" visible="false" position="0 0 -3">
       
-      <!-- Only the text label - no geometric shapes -->
+      <!-- Initial text that will fade out -->
       <a-text 
         id="mainText"
         value="To scan is to exist." 
@@ -187,6 +187,17 @@
         color="white" 
         scale="1.25 1.25 1.25"
         material="shader: msdf; font: roboto;">
+      </a-text>
+      
+      <!-- Second text that will appear after fade -->
+      <a-text 
+        id="secondText"
+        value="paragraph" 
+        position="0 1 0" 
+        align="center" 
+        color="white" 
+        scale="1.25 1.25 1.25"
+        material="shader: msdf; font: roboto; opacity: 0">
       </a-text>
       
     </a-entity>
@@ -208,6 +219,7 @@
     // GLOBAL VARIABLES
     // ===========================================
     let isARPlaced = false;        // Track if AR content is visible
+    let textAnimationComplete = false; // Track if text animation has run
 
     // ===========================================
     // INITIALIZATION
@@ -290,6 +302,49 @@
       updateInstructions('Data unencrypted, Move your device to explore');
       
       console.log('Data unencrypted, Move your device to explore');
+      
+      // Start the automatic text fade animation
+      startTextAnimation();
+    }
+
+    // ===========================================
+    // TEXT ANIMATION SYSTEM
+    // ===========================================
+    
+    function startTextAnimation() {
+      if (textAnimationComplete) return; // Don't run animation twice
+      
+      const mainText = document.getElementById('mainText');
+      const secondText = document.getElementById('secondText');
+      
+      console.log('Starting text animation...');
+      
+      // After 3 seconds, fade out first text and fade in second text
+      setTimeout(() => {
+        // Fade out first text
+        mainText.setAttribute('animation', {
+          property: 'material.opacity',
+          from: 1,
+          to: 0,
+          dur: 1000,
+          easing: 'easeInOutQuad'
+        });
+        
+        // Fade in second text with slight delay
+        setTimeout(() => {
+          secondText.setAttribute('animation', {
+            property: 'material.opacity',
+            from: 0,
+            to: 1,
+            dur: 1000,
+            easing: 'easeInOutQuad'
+          });
+          
+          textAnimationComplete = true;
+          console.log('Text animation completed');
+        }, 500); // 0.5 second delay between fade out and fade in
+        
+      }, 3000); // Wait 3 seconds before starting fade
     }
 
     // ===========================================
@@ -305,7 +360,18 @@
       const pulseCircle = document.getElementById('pulseCircle');
       pulseCircle.style.display = 'block';
       
+      // Reset text states
+      const mainText = document.getElementById('mainText');
+      const secondText = document.getElementById('secondText');
+      
+      // Remove any animations and reset opacity
+      mainText.removeAttribute('animation');
+      secondText.removeAttribute('animation');
+      mainText.setAttribute('material', 'opacity: 1');
+      secondText.setAttribute('material', 'opacity: 0');
+      
       isARPlaced = false;
+      textAnimationComplete = false;
       updateInstructions('Point camera to object');
       
       console.log('AR content reset');
