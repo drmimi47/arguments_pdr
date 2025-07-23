@@ -186,7 +186,8 @@
         align="center" 
         color="white" 
         scale="1.15 1.15 1.15"
-        material="shader: msdf; font: roboto; opacity: 1">
+        material="shader: msdf; font: roboto;"
+        visible="true">
       </a-text>
       
       <!-- Second text that will appear after fade -->
@@ -196,11 +197,27 @@
         position="0 1 0" 
         align="center" 
         color="white" 
-        scale="0.65 0.65 0.65"
-        material="shader: msdf; font: roboto; opacity: 0">
+        scale="0.40 0.40 0.40"
+        material="shader: msdf; font: roboto;"
+        visible="false">
       </a-text>
       
+      <!-- 3rd text that will appear after fade -->
+      <a-text 
+        id="thirdText"
+        value="[work in progress...]" 
+        position="0 1 0" 
+        align="center" 
+        color="white" 
+        scale="0.40 0.40 0.40"
+        material="shader: msdf; font: roboto;"
+        visible="false">
+      </a-text>
+
+
     </a-entity>
+
+
 
     <!-- Invisible plane for detecting taps -->
     <a-plane 
@@ -316,10 +333,11 @@
       
       const mainText = document.getElementById('mainText');
       const secondText = document.getElementById('secondText');
+      const thirdText = document.getElementById('thirdText');
       
       console.log('Starting text animation...');
       
-      // After 3 seconds, hide first text and show second text
+      // After seconds, hide first text and show second text
       setTimeout(() => {
         console.log('Switching from first text to second text');
         
@@ -328,11 +346,13 @@
         
         // Show second text instantly
         secondText.setAttribute('visible', 'true');
+
+        thirdText.setAttribute('visible', 'true');
         
         textAnimationComplete = true;
         console.log('Text animation completed');
         
-      }, 3000); // Wait 3 seconds before switching
+      }, 7000); // Wait seconds before switching
     }
 
     // ===========================================
@@ -351,12 +371,12 @@
       // Reset text states
       const mainText = document.getElementById('mainText');
       const secondText = document.getElementById('secondText');
+      const thirdText = document.getElementById('thirdText');
       
-      // Remove any animations and reset opacity
-      mainText.removeAttribute('animation__fadeout');
-      secondText.removeAttribute('animation__fadein');
-      mainText.setAttribute('material', 'opacity', 1);
-      secondText.setAttribute('material', 'opacity', 0);
+      // Reset visibility states
+      mainText.setAttribute('visible', 'true');
+      secondText.setAttribute('visible', 'false');
+      thirdText.setAttribute('visible', 'false');
       
       isARPlaced = false;
       textAnimationComplete = false;
