@@ -43,6 +43,36 @@
       pointer-events: auto; /* Allow interaction with this element */
     }
 
+    /* Pulsating circle in center of screen */
+    .pulse-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+      border: 3px solid rgba(255,255,255,0.8);
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      animation: pulse 2s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0.6;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+    }
+
     /* Control buttons at bottom */
     .controls {
       position: absolute;
@@ -94,12 +124,15 @@
   <div class="ui-overlay">
     <!-- Instructions that change based on state -->
     <div class="instructions" id="instructions">
-      Tap anywhere to place AR text
+      Point camera to find surfaces
     </div>
+    
+    <!-- Pulsating circle in center (hidden after AR is placed) -->
+    <div class="pulse-circle" id="pulseCircle"></div>
     
     <!-- Control buttons -->
     <div class="controls">
-      <button class="btn" id="resetBtn" title="Reset">🔄</button>
+      <button class="btn" id="resetBtn" title="Reset">Reset</button>
     </div>
   </div>
 
@@ -129,7 +162,7 @@
       <!-- Only the text label - no geometric shapes -->
       <a-text 
         id="mainText"
-        value="To Scan is to Exist" 
+        value="AR Experience" 
         position="0 1 0" 
         align="center" 
         color="white" 
@@ -229,6 +262,10 @@
       const arContent = document.getElementById('arContent');
       arContent.setAttribute('visible', 'true');
       
+      // Hide the pulsating circle
+      const pulseCircle = document.getElementById('pulseCircle');
+      pulseCircle.style.display = 'none';
+      
       // Update state and UI
       isARPlaced = true;
       updateInstructions('AR text placed! Move your device to explore');
@@ -245,8 +282,12 @@
       const arContent = document.getElementById('arContent');
       arContent.setAttribute('visible', 'false');
       
+      // Show the pulsating circle again
+      const pulseCircle = document.getElementById('pulseCircle');
+      pulseCircle.style.display = 'block';
+      
       isARPlaced = false;
-      updateInstructions('Tap anywhere to place AR text');
+      updateInstructions('Point camera to find surfaces');
       
       console.log('AR content reset');
     });
@@ -277,19 +318,19 @@
         case 'demo1':
           textLabel.setAttribute('value', 'Demo 1');
           textLabel.setAttribute('color', '#FF6B6B'); // Red text
-          updateInstructions('Demo 1: Tap to place red text');
+          updateInstructions('Demo 1: Point camera to find surfaces');
           break;
           
         case 'demo2':
           textLabel.setAttribute('value', 'Demo 2');
           textLabel.setAttribute('color', '#4ECDC4'); // Teal text
-          updateInstructions('Demo 2: Tap to place teal text');
+          updateInstructions('Demo 2: Point camera to find surfaces');
           break;
           
         case 'museum':
           textLabel.setAttribute('value', 'Museum Guide');
           textLabel.setAttribute('color', '#45B7D1'); // Blue text
-          updateInstructions('Museum: Tap to place your virtual guide');
+          updateInstructions('Museum: Point camera to find surfaces');
           break;
           
         default:
