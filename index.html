@@ -53,32 +53,38 @@
     }
 
     /* ========================================
-       PULSATING CIRCLE - Center target
+       SCANNING INDICATOR - Center target
        ======================================== */
-    /* Pulsating circle in center of screen */
-    .pulse-circle {
+    /* Scanning indicator in center of screen */
+    .scanning-indicator {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 80px;
-      height: 80px;
+      width: 120px;
+      height: 120px;
       border: 3px solid rgba(255,255,255,0.8);
-      border-radius: 50%;
+      border-radius: 15px;
       background: rgba(255,255,255,0.1);
-      animation: pulse 2s ease-in-out infinite;
+      animation: scan 2s ease-in-out infinite;
       pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: white;
+      text-align: center;
     }
 
-    /* Animation for pulsating effect */
-    @keyframes pulse {
+    /* Animation for scanning effect */
+    @keyframes scan {
       0% {
         transform: translate(-50%, -50%) scale(1);
         opacity: 1;
       }
       50% {
-        transform: translate(-50%, -50%) scale(1.2);
-        opacity: 0.6;
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 0.7;
       }
       100% {
         transform: translate(-50%, -50%) scale(1);
@@ -135,19 +141,40 @@
     .a-enter-vr {
       display: none !important;
     }
+
+    /* Status indicator for marker detection */
+    .marker-status {
+      position: absolute;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      display: none;
+    }
   </style>
 </head>
 
 <body>
   <!-- UI Layer - overlaid on top of camera view -->
   <div class="ui-overlay">
-    <!-- Instructions that change based on state -->
+          <!-- Instructions that change based on state -->
     <div class="instructions" id="instructions">
-      Point camera to object
+      Point camera at QR code or printed marker
     </div>
     
-    <!-- Pulsating circle in center (hidden after AR is placed) -->
-    <div class="pulse-circle" id="pulseCircle"></div>
+    <!-- Scanning indicator in center (hidden after QR is found) -->
+    <div class="scanning-indicator" id="scanningIndicator">
+      Scan QR Code
+    </div>
+    
+    <!-- Marker detection status -->
+    <div class="marker-status" id="markerStatus">
+      QR Code Detected
+    </div>
     
     <!-- Control buttons -->
     <div class="controls">
@@ -162,10 +189,10 @@
     <button onclick="location.reload()">Try Again</button>
   </div>
 
-  <!-- A-Frame AR Scene -->
+  <!-- A-Frame AR Scene with image marker tracking -->
   <a-scene
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; trackingMethod: best;"
     vr-mode-ui="enabled: false">
     
     <!-- Camera setup -->
@@ -173,67 +200,101 @@
     
     <!-- Lighting for 3D objects -->
     <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
-    <a-light type="directional" position="0 5 2" intensity="1.0"></a-light>
+    <a-light type="directional" position="0 3 2" intensity="1.0"></a-light>
     
-    <!-- AR Content Group - hidden until placed -->
-    <a-entity id="arContent" visible="false" position="0 0 -3">
+    <!-- Marker entity - AR content will be anchored to this -->
+    <a-nft 
+      id="markerEntity"
+      type="nft" 
+      url="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/three.js/examples/marker-training/examples/pattern-files/pattern-letterA"
+      smooth="true" 
+      smoothCount="10" 
+      smoothTolerance="0.01" 
+      smoothThreshold="5"
+      raycaster="objects: .clickable">
       
-      <!-- Initial text that will fade out -->
-      <a-text 
-        id="mainText"
-        value="To scan is to Exist." 
-        position="0 1 0" 
-        align="center" 
-        color="white" 
-        scale="1.15 1.15 1.15"
-        material="shader: msdf; font: roboto;"
-        visible="true">
-      </a-text>
-      
-      <!-- Second text that will appear after fade -->
-      <a-text 
-        id="secondText"
-        value="Object (noun)\nA material thing that can be seen and touched." 
-        position="0 1 0" 
-        align="center" 
-        color="white" 
-        scale="0.40 0.40 0.40"
-        material="shader: msdf; font: roboto;"
-        visible="false">
-      </a-text>
-      
-      <!-- 3rd text that will appear after fade -->
-      <a-text 
-        id="thirdText"
-        value="[work in progress...]" 
-        position="0 1 0" 
-        align="center" 
-        color="white" 
-        scale="0.40 0.40 0.40"
-        material="shader: msdf; font: roboto;"
-        visible="false">
-      </a-text>
+      <!-- AR Content Group - positioned relative to marker -->
+      <a-entity id="arContent" position="0 0 0">
+        
+        <!-- Initial text that will fade out -->
+        <a-text 
+          id="mainText"
+          value="To scan is to Exist." 
+          position="0 1 0" 
+          align="center" 
+          color="white" 
+          scale="1.5 1.5 1.5"
+          material="shader: msdf; font: roboto;"
+          visible="true">
+        </a-text>
+        
+        <!-- Second text that will appear after fade -->
+        <a-text 
+          id="secondText"
+          value="Object (noun)\nA material thing that can be seen and touched." 
+          position="0 1 0" 
+          align="center" 
+          color="white" 
+          scale="0.6 0.6 0.6"
+          material="shader: msdf; font: roboto;"
+          visible="false">
+        </a-text>
+        
+        <!-- 3rd text that will appear after fade -->
+        <a-text 
+          id="thirdText"
+          value="[work in progress...]" 
+          position="0 1 0" 
+          align="center" 
+          color="white" 
+          scale="0.6 0.6 0.6"
+          material="shader: msdf; font: roboto;"
+          visible="false">
+        </a-text>
 
-    </a-entity>
+        <!-- Optional: Add a visual base/platform -->
+        <a-cylinder 
+          position="0 0.1 0" 
+          radius="1" 
+          height="0.2" 
+          color="#333333" 
+          opacity="0.3">
+        </a-cylinder>
 
-    <!-- Invisible plane for detecting taps -->
-    <a-plane 
-      id="tapTarget"
-      position="0 0 -4" 
-      rotation="-90 0 0" 
-      width="100" 
-      height="100" 
-      material="opacity: 0; transparent: true"
-      class="clickable">
-    </a-plane>
+      </a-entity>
+    </a-nft>
+
+    <!-- Fallback: If NFT fails, use pattern marker -->
+    <a-marker 
+      id="fallbackMarker"
+      type="pattern" 
+      url="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/three.js/examples/marker-training/examples/pattern-files/pattern-hiro.patt"
+      smooth="true" 
+      smoothCount="10" 
+      smoothTolerance="0.01" 
+      smoothThreshold="5"
+      visible="false">
+      
+      <!-- Duplicate AR content for fallback -->
+      <a-entity position="0 0 0">
+        <a-text 
+          value="Fallback Mode - Use Hiro Marker" 
+          position="0 1 0" 
+          align="center" 
+          color="yellow" 
+          scale="1.0 1.0 1.0">
+        </a-text>
+      </a-entity>
+    </a-marker>
   </a-scene>
 
   <script>
     // ===========================================
     // GLOBAL VARIABLES
     // ===========================================
-    let isARPlaced = false;        // Track if AR content is visible
-    let textAnimationComplete = false; // Track if text animation has run
+    let markerFound = false;           // Track if marker is currently visible
+    let textAnimationStarted = false;  // Track if text animation has started
+    let textAnimationComplete = false; // Track if text animation has completed
 
     // ===========================================
     // INITIALIZATION
@@ -243,7 +304,68 @@
     document.querySelector('a-scene').addEventListener('loaded', function() {
       console.log('AR scene loaded successfully');
       checkCameraPermission();
+      setupMarkerEvents();
     });
+
+    // ===========================================
+    // MARKER TRACKING EVENTS
+    // ===========================================
+    
+    function setupMarkerEvents() {
+      const marker = document.getElementById('markerEntity');
+      const fallbackMarker = document.getElementById('fallbackMarker');
+      
+      // Function to handle marker found
+      function handleMarkerFound(markerType) {
+        console.log(`${markerType} marker detected!`);
+        markerFound = true;
+        
+        // Hide scanning indicator
+        document.getElementById('scanningIndicator').style.display = 'none';
+        
+        // Show marker status
+        const markerStatus = document.getElementById('markerStatus');
+        markerStatus.style.display = 'block';
+        markerStatus.textContent = `${markerType} detected - Move device to explore`;
+        
+        // Update instructions
+        updateInstructions(`${markerType} detected! Move your device around`);
+        
+        // Start text animation if not already started
+        if (!textAnimationStarted) {
+          startTextAnimation();
+        }
+      }
+      
+      // Function to handle marker lost
+      function handleMarkerLost(markerType) {
+        console.log(`${markerType} marker lost`);
+        markerFound = false;
+        
+        // Show scanning indicator again
+        document.getElementById('scanningIndicator').style.display = 'flex';
+        
+        // Hide marker status
+        document.getElementById('markerStatus').style.display = 'none';
+        
+        // Update instructions
+        updateInstructions('Point camera back at QR code or marker');
+      }
+      
+      // Primary marker events (NFT - for your QR code)
+      marker.addEventListener('markerFound', () => handleMarkerFound('QR Code'));
+      marker.addEventListener('markerLost', () => handleMarkerLost('QR Code'));
+      
+      // Fallback marker events (Pattern marker)
+      fallbackMarker.addEventListener('markerFound', () => {
+        handleMarkerFound('Pattern');
+        fallbackMarker.setAttribute('visible', 'true');
+      });
+      fallbackMarker.addEventListener('markerLost', () => {
+        handleMarkerLost('Pattern');
+        fallbackMarker.setAttribute('visible', 'false');
+      });
+    }
 
     // ===========================================
     // CAMERA PERMISSION CHECK
@@ -276,57 +398,13 @@
     }
 
     // ===========================================
-    // AR CONTENT PLACEMENT
-    // ===========================================
-    
-    // Handle clicks/taps on the invisible plane
-    document.getElementById('tapTarget').addEventListener('click', function() {
-      placeARContent();
-    });
-
-    // Handle touch events for mobile devices
-    let touchStartTime = 0;
-    
-    document.addEventListener('touchstart', function() {
-      touchStartTime = Date.now();
-    });
-
-    document.addEventListener('touchend', function(event) {
-      const touchDuration = Date.now() - touchStartTime;
-      
-      // Only place on short taps (not long presses or swipes)
-      if (touchDuration < 300 && !isARPlaced) {
-        placeARContent();
-      }
-    });
-
-    function placeARContent() {
-      if (isARPlaced) return; // Don't place twice
-      
-      // Show the AR content
-      const arContent = document.getElementById('arContent');
-      arContent.setAttribute('visible', 'true');
-      
-      // Hide the pulsating circle
-      const pulseCircle = document.getElementById('pulseCircle');
-      pulseCircle.style.display = 'none';
-      
-      // Update state and UI
-      isARPlaced = true;
-      updateInstructions('Data unencrypted, Move your device to explore');
-      
-      console.log('Data unencrypted, Move your device to explore');
-      
-      // Start the automatic text fade animation
-      startTextAnimation();
-    }
-
-    // ===========================================
     // TEXT ANIMATION SYSTEM
     // ===========================================
     
     function startTextAnimation() {
-      if (textAnimationComplete) return; // Don't run animation twice
+      if (textAnimationStarted) return; // Don't run animation twice
+      
+      textAnimationStarted = true;
       
       const mainText = document.getElementById('mainText');
       const secondText = document.getElementById('secondText');
@@ -334,14 +412,14 @@
       
       console.log('Starting text animation sequence...');
       
-      // Step 1: After 7 seconds, hide first text and show second text
+      // Step 1: After 5 seconds, hide first text and show second text
       setTimeout(() => {
         console.log('Step 1: Switching from first text to second text');
         mainText.setAttribute('visible', 'false');
         secondText.setAttribute('visible', 'true');
-      }, 7000); // Wait 7 seconds before switching to second text
+      }, 5000); // Wait 5 seconds before switching to second text
       
-      // Step 2: After another 7 seconds, hide second text and show third text
+      // Step 2: After another 5 seconds, hide second text and show third text
       setTimeout(() => {
         console.log('Step 2: Switching from second text to third text');
         secondText.setAttribute('visible', 'false');
@@ -349,22 +427,15 @@
         
         textAnimationComplete = true;
         console.log('Text animation sequence completed');
-      }, 12000); // Wait total of 14 seconds (7 + 7) before switching to third text
+      }, 10000); // Wait total of 10 seconds before switching to third text
     }
 
     // ===========================================
     // UI CONTROLS
     // ===========================================
     
-    // Reset button - hide AR content and allow placing again
+    // Reset button - reset the experience
     document.getElementById('resetBtn').addEventListener('click', function() {
-      const arContent = document.getElementById('arContent');
-      arContent.setAttribute('visible', 'false');
-      
-      // Show the pulsating circle again
-      const pulseCircle = document.getElementById('pulseCircle');
-      pulseCircle.style.display = 'block';
-      
       // Reset text states
       const mainText = document.getElementById('mainText');
       const secondText = document.getElementById('secondText');
@@ -375,11 +446,19 @@
       secondText.setAttribute('visible', 'false');
       thirdText.setAttribute('visible', 'false');
       
-      isARPlaced = false;
+      // Reset animation states
+      textAnimationStarted = false;
       textAnimationComplete = false;
-      updateInstructions('Point camera to object');
       
-      console.log('AR content reset');
+      // Reset UI
+      if (!markerFound) {
+        document.getElementById('scanningIndicator').style.display = 'flex';
+        updateInstructions('Point camera at QR code');
+      } else {
+        updateInstructions('QR Code detected! Move your device around');
+      }
+      
+      console.log('Experience reset');
     });
 
     function updateInstructions(text) {
@@ -390,7 +469,7 @@
     // QR CODE CUSTOMIZATION
     // ===========================================
     
-    // Read URL parameters from QR code
+    // Read URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const experience = urlParams.get('experience'); // e.g., ?experience=demo1
     const qrId = urlParams.get('qr');               // e.g., &qr=location1
@@ -407,29 +486,25 @@
       // ==========================================
       // QR CODE CUSTOMIZATION - Different experiences
       // ==========================================
-      // EDIT HERE: Add new QR code experiences
       
       switch(experience) {
         case 'demo1':
-          textLabel.setAttribute('value', 'Demo 1');
+          textLabel.setAttribute('value', 'Demo 1: AR Locked');
           textLabel.setAttribute('color', '#FF6B6B'); // Red text
-          updateInstructions('Demo 1: Point camera to find surfaces');
           break;
           
         case 'demo2':
-          textLabel.setAttribute('value', 'Demo 2');
+          textLabel.setAttribute('value', 'Demo 2: AR Locked');
           textLabel.setAttribute('color', '#4ECDC4'); // Teal text
-          updateInstructions('Demo 2: Point camera to find surfaces');
           break;
           
         case 'museum':
-          textLabel.setAttribute('value', 'Museum Guide');
+          textLabel.setAttribute('value', 'Museum Guide AR');
           textLabel.setAttribute('color', '#45B7D1'); // Blue text
-          updateInstructions('Museum: Point camera to find surfaces');
           break;
           
         default:
-          // Keep default white text and instructions
+          // Keep default text and color
           break;
       }
     }
@@ -448,7 +523,6 @@
 
     // Handle orientation changes on mobile
     window.addEventListener('orientationchange', function() {
-      // Small delay to let orientation settle, then reload
       setTimeout(function() {
         console.log('Orientation changed, reloading...');
         window.location.reload();
@@ -459,12 +533,12 @@
     // DEBUG HELPERS
     // ===========================================
     
-    // Add debug info to console
-    console.log('=== AR Experience Debug Info ===');
+    console.log('=== Multi-Marker AR Experience Debug Info ===');
     console.log('Experience type:', experience || 'default');
     console.log('QR source:', qrId || 'direct access');
-    console.log('User agent:', navigator.userAgent);
-    console.log('================================');
+    console.log('Primary: NFT marker (your QR code)');
+    console.log('Fallback: Hiro pattern marker');
+    console.log('============================================');
   </script>
 </body>
 </html>
