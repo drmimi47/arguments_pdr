@@ -1,95 +1,514 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>AR Image Sequence</title>
-    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.4/aframe/build/aframe-ar-nft.js"></script>
-    <style>
-      body { margin: 0; overflow: hidden; }
-      #overlay {
-        position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-        background: rgba(0,0,0,0.6); color: white; padding: 10px 20px; border-radius: 8px;
-        font-family: sans-serif; text-align: center; max-width: 80%;
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Experience</title>
+  
+  <!-- AR.js library for camera-based AR - no registration needed -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
+  
+  <style>
+    /* ========================================
+       BASIC PAGE SETUP
+       ======================================== */
+    /* Basic reset and font */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    /* ========================================
+       UI OVERLAY - Elements on top of camera
+       ======================================== */
+    /* Container for all UI elements overlaid on camera */
+    .ui-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none; /* Let camera touches pass through */
+      z-index: 100;
+    }
+
+    /* ========================================
+       INSTRUCTION TEXT - Top of screen
+       ======================================== */
+    /* Instruction text at top of screen */
+    .instructions {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 25px;
+      text-align: center;
+      font-size: 16px;
+      max-width: 80%;
+      pointer-events: auto; /* Allow interaction with this element */
+    }
+
+    /* ========================================
+       PULSATING CIRCLE - Center target
+       ======================================== */
+    /* Pulsating circle in center of screen */
+    .pulse-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+      border: 3px solid rgba(255,255,255,0.8);
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      animation: pulse 2s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    /* Animation for pulsating effect */
+    @keyframes pulse {
+      0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
       }
-    </style>
-  </head>
-  <body>
-    <div id="overlay">Initializing AR experience...</div>
+      50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0.6;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+    }
 
-    <a-scene
-      vr-mode-ui="enabled: false"
-      embedded
-      arjs="sourceType: webcam; debugUIEnabled: false;"
-      renderer="logarithmicDepthBuffer: true;"
-    >
-      <!-- Camera -->
-      <a-entity camera position="0 1.6 0"></a-entity>
+    /* ========================================
+       BOTTOM MESSAGE AREA - From original non-working code
+       ======================================== */
+    .message {
+      position: absolute;
+      bottom: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 18px;
+      opacity: 0;
+      transition: opacity 1s ease;
+      max-width: 80%;
+      text-align: center;
+      pointer-events: none;
+    }
 
-      <!-- Text Entity -->
-      <a-entity id="text-sequence"
-        position="0 1.5 -2"
-        text="value: ; align: center; width: 3; wrapCount: 30; color: white">
-      </a-entity>
+    .message.visible {
+      opacity: 1;
+    }
 
-      <!-- Image Panels (Initially Hidden) -->
-      <a-image id="img1" src="argument_kiosk.jpg" position="-1 1.5 -3" rotation="0 0 0" visible="false"></a-image>
-      <a-image id="img2" src="argument_mirror.jpg" position="0 1.5 -3" rotation="0 0 0" visible="false"></a-image>
-      <a-image id="img3" src="argument_turnstile.jpg" position="1 1.5 -3" rotation="0 0 0" visible="false"></a-image>
-    </a-scene>
+    /* Control buttons at bottom */
+    .controls {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      pointer-events: auto; /* Allow button clicks */
+    }
 
-    <script>
-      const overlay = document.getElementById('overlay');
-      const textEntity = document.getElementById('text-sequence');
+    /* Individual reset button styling */
+    .btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.8);    
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
 
-      // Text sequence messages
-      const messages = [
-        "Welcome to the experience.",
-        "Follow the story step by step.",
-        "Now, explore the images."
+    /* ========================================
+       ERROR MESSAGES - Camera issues
+       ======================================== */
+    /* Error message if camera fails */
+    .error {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,0,0,0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 200;
+      max-width: 80%;
+      display: none; /* Hidden by default */
+    }
+
+    /* ========================================
+       HIDE DEFAULT A-FRAME ELEMENTS
+       ======================================== */
+    /* Hide A-Frame's default VR button */
+    .a-enter-vr {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- UI Layer - overlaid on top of camera view -->
+  <div class="ui-overlay">
+    <!-- Instructions that change based on state -->
+    <div class="instructions" id="instructions">
+      Point camera at surface and tap to place AR
+    </div>
+    
+    <!-- Pulsating circle in center (hidden after AR is placed) -->
+    <div class="pulse-circle" id="pulseCircle"></div>
+    
+    <!-- Bottom message area for cycling text -->
+    <div id="message" class="message"></div>
+    
+    <!-- Control buttons -->
+    <div class="controls">
+      <button class="btn" id="resetBtn" title="Reset">⟲</button>
+    </div>
+  </div>
+
+  <!-- Error message for camera issues -->
+  <div class="error" id="errorMsg">
+    <h3>Camera Access Needed</h3>
+    <p>Please allow camera access to use AR</p>
+    <button onclick="location.reload()">Try Again</button>
+  </div>
+
+  <!-- A-Frame AR Scene -->
+  <a-scene
+    embedded
+    arjs="sourceType: webcam; debugUIEnabled: false;"
+    vr-mode-ui="enabled: false">
+    
+    <!-- Camera setup -->
+    <a-camera look-controls-enabled="false" arjs-look-controls></a-camera>
+    
+    <!-- Lighting for 3D objects -->
+    <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
+    <a-light type="directional" position="0 5 2" intensity="1.0"></a-light>
+    
+    <!-- AR Content Group - hidden until placed -->
+    <a-entity id="arContent" visible="false" position="0 0 -3">
+      <!-- Content will be dynamically added here -->
+    </a-entity>
+
+    <!-- Invisible plane for detecting taps -->
+    <a-plane 
+      id="tapTarget"
+      position="0 0 -4" 
+      rotation="-90 0 0" 
+      width="100" 
+      height="100" 
+      material="opacity: 0; transparent: true"
+      class="clickable">
+    </a-plane>
+  </a-scene>
+
+  <script>
+    // ===========================================
+    // GLOBAL VARIABLES
+    // ===========================================
+    let isARPlaced = false;        // Track if AR content is visible
+    let messageIndex = 0;          // Track current message
+    let messagesComplete = false;  // Track if all messages shown
+
+    // Messages from the original non-working code
+    const messages = [
+      // Original 3
+      "The anti-object rejects monumentality.",
+      "Architecture as atmosphere, not mass.",
+      "Presence without possession.",
+      // 10 new thematic snippets
+      "Form dissolves into environment.",
+      "The void becomes the work itself.",
+      "Edges blur; boundaries fade.",
+      "We inhabit relationships, not walls.",
+      "Light and shadow carry more weight than stone.",
+      "The object is a ghost in space.",
+      "Architecture is an act of disappearance.",
+      "Meaning is carried by air, water, and sound.",
+      "Structure hides in plain sight.",
+      "The anti-object lives between perception and memory."
+    ];
+
+    // ===========================================
+    // INITIALIZATION
+    // ===========================================
+    
+    // Wait for the AR scene to fully load
+    document.querySelector('a-scene').addEventListener('loaded', function() {
+      console.log('AR scene loaded successfully');
+      checkCameraPermission();
+    });
+
+    // ===========================================
+    // CAMERA PERMISSION CHECK
+    // ===========================================
+    
+    function checkCameraPermission() {
+      // Test if camera is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showError('Camera not supported on this device');
+        return;
+      }
+
+      // Request camera access
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+          console.log('Camera permission granted');
+          // Stop the test stream immediately
+          stream.getTracks().forEach(track => track.stop());
+        })
+        .catch(function(error) {
+          console.error('Camera permission denied:', error);
+          showError('Camera access denied');
+        });
+    }
+
+    function showError(message) {
+      const errorElement = document.getElementById('errorMsg');
+      errorElement.querySelector('p').textContent = message;
+      errorElement.style.display = 'block';
+    }
+
+    // ===========================================
+    // AR CONTENT PLACEMENT
+    // ===========================================
+    
+    // Handle clicks/taps on the invisible plane
+    document.getElementById('tapTarget').addEventListener('click', function() {
+      placeARContent();
+    });
+
+    // Handle touch events for mobile devices
+    let touchStartTime = 0;
+    
+    document.addEventListener('touchstart', function() {
+      touchStartTime = Date.now();
+    });
+
+    document.addEventListener('touchend', function(event) {
+      const touchDuration = Date.now() - touchStartTime;
+      
+      // Only place on short taps (not long presses or swipes)
+      if (touchDuration < 300 && !isARPlaced) {
+        placeARContent();
+      }
+    });
+
+    function placeARContent() {
+      if (isARPlaced) return; // Don't place twice
+      
+      // Show the AR content
+      const arContent = document.getElementById('arContent');
+      arContent.setAttribute('visible', 'true');
+      
+      // Hide the pulsating circle
+      const pulseCircle = document.getElementById('pulseCircle');
+      pulseCircle.style.display = 'none';
+      
+      // Update state and UI
+      isARPlaced = true;
+      updateInstructions('Experience activated - Messages will cycle automatically');
+      
+      console.log('AR content placed, starting message cycle');
+      
+      // Start the message cycling
+      cycleMessages();
+    }
+
+    // ===========================================
+    // MESSAGE CYCLING SYSTEM (from original code)
+    // ===========================================
+    
+    function showMessage(text) {
+      const messageEl = document.getElementById("message");
+      messageEl.textContent = text;
+      messageEl.classList.add("visible");
+      
+      setTimeout(() => {
+        messageEl.classList.remove("visible");
+      }, 3000);
+    }
+
+    function cycleMessages() {
+      if (messageIndex < messages.length) {
+        showMessage(messages[messageIndex]);
+        messageIndex++;
+        setTimeout(cycleMessages, 4500);
+      } else {
+        // Show images after text
+        messagesComplete = true;
+        showImages();
+        updateInstructions('All messages complete - Images now displayed');
+      }
+    }
+
+    // ===========================================
+    // IMAGE DISPLAY SYSTEM (adapted from original)
+    // ===========================================
+    
+    function showImages() {
+      const arContent = document.getElementById('arContent');
+      
+      const positions = [
+        {x: 0, y: 1.5, z: 0},
+        {x: -1.5, y: 1.5, z: 0},
+        {x: 1.5, y: 1.5, z: 0}
       ];
 
-      // Function to update text in sequence
-      function runTextSequence() {
-        let index = 0;
-        const interval = setInterval(() => {
-          if (index < messages.length) {
-            textEntity.setAttribute('text', 'value', messages[index]);
-            index++;
-          } else {
-            clearInterval(interval);
-            showImages();
-          }
-        }, 3000);
-      }
+      // Since the original images might not be available, we'll create colored boxes as placeholders
+      // You can replace these with actual image URLs when available
+      const placeholders = [
+        { color: '#FF6B6B', label: 'Kiosk' },
+        { color: '#4ECDC4', label: 'Mirror' }, 
+        { color: '#45B7D1', label: 'Turnstile' }
+      ];
 
-      // Show images after text sequence
-      function showImages() {
-        overlay.textContent = "Tap an image to rotate it.";
-        document.getElementById('img1').setAttribute('visible', 'true');
-        document.getElementById('img2').setAttribute('visible', 'true');
-        document.getElementById('img3').setAttribute('visible', 'true');
-      }
-
-      // Tap to rotate
-      function makeInteractive(el) {
-        el.addEventListener('click', () => {
-          const currentRot = el.getAttribute('rotation');
-          el.setAttribute('rotation', {
-            x: currentRot.x,
-            y: currentRot.y + 45,
-            z: currentRot.z
-          });
-        });
-      }
-
-      ['img1', 'img2', 'img3'].forEach(id => makeInteractive(document.getElementById(id)));
-
-      // Start AR sequence when ready
-      window.addEventListener('load', () => {
-        overlay.textContent = "AR ready. Starting sequence...";
-        setTimeout(runTextSequence, 1000);
+      placeholders.forEach((item, i) => {
+        // Create a colored box as placeholder for image
+        const boxEl = document.createElement("a-box");
+        boxEl.setAttribute("position", `${positions[i].x} ${positions[i].y} ${positions[i].z}`);
+        boxEl.setAttribute("width", 1.2);
+        boxEl.setAttribute("height", 0.8);
+        boxEl.setAttribute("depth", 0.1);
+        boxEl.setAttribute("color", item.color);
+        boxEl.setAttribute("look-at", "[camera]");
+        
+        // Add a text label
+        const textEl = document.createElement("a-text");
+        textEl.setAttribute("value", item.label);
+        textEl.setAttribute("position", `${positions[i].x} ${positions[i].y - 0.6} ${positions[i].z}`);
+        textEl.setAttribute("align", "center");
+        textEl.setAttribute("color", "white");
+        textEl.setAttribute("scale", "0.8 0.8 0.8");
+        textEl.setAttribute("look-at", "[camera]");
+        
+        arContent.appendChild(boxEl);
+        arContent.appendChild(textEl);
       });
-    </script>
-  </body>
+
+      console.log('Images/placeholders displayed');
+    }
+
+    // ===========================================
+    // UI CONTROLS
+    // ===========================================
+    
+    // Reset button - hide AR content and allow placing again
+    document.getElementById('resetBtn').addEventListener('click', function() {
+      const arContent = document.getElementById('arContent');
+      arContent.setAttribute('visible', 'false');
+      
+      // Clear any dynamically added content
+      while (arContent.firstChild) {
+        arContent.removeChild(arContent.firstChild);
+      }
+      
+      // Show the pulsating circle again
+      const pulseCircle = document.getElementById('pulseCircle');
+      pulseCircle.style.display = 'block';
+      
+      // Hide any visible message
+      const messageEl = document.getElementById("message");
+      messageEl.classList.remove("visible");
+      
+      // Reset states
+      isARPlaced = false;
+      messageIndex = 0;
+      messagesComplete = false;
+      updateInstructions('Point camera at surface and tap to place AR');
+      
+      console.log('AR content reset');
+    });
+
+    function updateInstructions(text) {
+      document.getElementById('instructions').textContent = text;
+    }
+
+    // ===========================================
+    // QR CODE CUSTOMIZATION
+    // ===========================================
+    
+    // Read URL parameters from QR code
+    const urlParams = new URLSearchParams(window.location.search);
+    const experience = urlParams.get('experience'); // e.g., ?experience=demo1
+    const qrId = urlParams.get('qr');               // e.g., &qr=location1
+    
+    // Log QR code info for analytics
+    if (qrId) {
+      console.log('Launched from QR code:', qrId);
+    }
+    
+    // Customize content based on experience parameter
+    function customizeExperience() {
+      // You can customize messages or other elements based on QR code parameters
+      switch(experience) {
+        case 'demo1':
+          updateInstructions('Demo 1: Point camera at surface and tap to place AR');
+          break;
+          
+        case 'demo2':
+          updateInstructions('Demo 2: Point camera at surface and tap to place AR');
+          break;
+          
+        case 'museum':
+          updateInstructions('Museum: Point camera at surface and tap to place AR');
+          break;
+          
+        default:
+          // Keep default instructions
+          break;
+      }
+    }
+
+    // Apply customization when page loads
+    customizeExperience();
+
+    // ===========================================
+    // ERROR HANDLING & UTILITIES
+    // ===========================================
+    
+    // Handle JavaScript errors
+    window.addEventListener('error', function(event) {
+      console.error('JavaScript error:', event.error);
+    });
+
+    // Handle orientation changes on mobile
+    window.addEventListener('orientationchange', function() {
+      // Small delay to let orientation settle, then reload
+      setTimeout(function() {
+        console.log('Orientation changed, reloading...');
+        window.location.reload();
+      }, 500);
+    });
+
+    // ===========================================
+    // DEBUG HELPERS
+    // ===========================================
+    
+    // Add debug info to console
+    console.log('=== AR Experience Debug Info ===');
+    console.log('Experience type:', experience || 'default');
+    console.log('QR source:', qrId || 'direct access');
+    console.log('Messages count:', messages.length);
+    console.log('User agent:', navigator.userAgent);
+    console.log('================================');
+  </script>
+</body>
 </html>
