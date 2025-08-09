@@ -13,7 +13,6 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: black; /* Black background */
     }
     .ui-overlay {
       position: fixed;
@@ -23,7 +22,6 @@
       height: 100%;
       pointer-events: none;
       z-index: 100;
-      background: black; /* Ensure black overlay */
     }
     .instructions {
       position: absolute;
@@ -50,8 +48,7 @@
       border-radius: 50%;
       background: rgba(255,255,255,0.1);
       animation: pulse 2s ease-in-out infinite;
-      pointer-events: auto; /* Make clickable */
-      cursor: pointer;
+      pointer-events: none;
     }
     @keyframes pulse {
       0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
@@ -92,42 +89,18 @@
       display: none;
     }
     .a-enter-vr { display: none !important; }
-    
-    /* Hide the A-Frame scene completely */
-    a-scene {
-      display: none !important;
-    }
-    
-    /* Content overlay for AR text */
-    .ar-content {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      text-align: center;
-      font-size: 24px;
-      z-index: 150;
-      display: none;
-      max-width: 80%;
-      line-height: 1.4;
-    }
   </style>
 </head>
 
 <body>
   <div class="ui-overlay">
     <div class="instructions" id="instructions">
-      Tap the circle to begin
+      Point camera not too close to object
     </div>
-    <div class="pulse-circle" id="pulseCircle" onclick="placeARContent()"></div>
+    <div class="pulse-circle" id="pulseCircle"></div>
     <div class="controls">
       <button class="btn" id="resetBtn" title="Reset">Reset</button>
     </div>
-  </div>
-
-  <div class="ar-content" id="arContent">
-    <div id="textDisplay">To scan is to Exist.</div>
   </div>
 
   <div class="error" id="errorMsg">
@@ -136,45 +109,54 @@
     <button onclick="location.reload()">Try Again</button>
   </div>
 
-  <!-- Hidden A-Frame scene -->
   <a-scene
     embedded
     arjs="sourceType: webcam; debugUIEnabled: false;"
-    vr-mode-ui="enabled: false"
-    style="display: none;">
+    vr-mode-ui="enabled: false">
     
     <a-camera look-controls-enabled="false" arjs-look-controls></a-camera>
     <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
     <a-light type="directional" position="0 5 2" intensity="1.0"></a-light>
+    
+    <a-entity id="arContent" visible="false" position="0 0 -3">
+      <!-- First text -->
+      <a-text id="mainText" value="To scan is to Exist." position="0 1 0" align="center" color="white" scale="1.15 1.15 1.15" material="shader: msdf; font: roboto;" visible="true"></a-text>
+      <!-- Second text -->
+      <a-text id="secondText" value="Object (noun)\nA material thing that can be seen and touched." position="0 1 0" align="center" color="white" scale="0.40 0.40 0.40" material="shader: msdf; font: roboto;" visible="false"></a-text>
+      <!-- Third text -->
+      <a-text id="thirdText" value="Are QR codes gates?" position="0 1 0" align="center" color="white" scale="0.40 0.40 0.40" material="shader: msdf; font: roboto;" visible="false"></a-text>
+      <!-- Fourth to Eighth text -->
+      <a-text id="fourthText" value="Public spaces and private interfaces." position="0 1 0" align="center" color="white" scale="0.40 0.40 0.40" material="shader: msdf; font: roboto;" visible="false"></a-text>
+      <a-text id="fifthText" value="Convenience costs community." position="0 1 0" align="center" color="white" scale="0.40 0.40 0.40" material="shader: msdf; font: roboto;" visible="false"></a-text>
+      <a-text id="sixthText" value="Touch the wax, feel the weight of exclusion." position="0 1 0" align="center" color="white" scale="0.40 0.40 0.40" material="shader: msdf; font: roboto;" visible="false"></a-text>
+      <a-text id="seventhText" value="Design for all, not just the technology-enabled." position="0 1 0" align="center" color="white" scale="0.40 0.40 0.40" material="shader: msdf; font: roboto;" visible="false"></a-text>
+      <a-text id="eighthText" value="End of transmission." position="0 1 0" align="center" color="white" scale="0.40 0.40 0.40" material="shader: msdf; font: roboto;" visible="false"></a-text>
+    </a-entity>
+
+    <a-plane id="tapTarget" position="0 0 -4" rotation="-90 0 0" width="100" height="100" material="opacity: 0; transparent: true" class="clickable"></a-plane>
   </a-scene>
 
   <script>
     let isARPlaced = false;
     let textAnimationComplete = false;
-    let currentTextIndex = 0;
 
-    const texts = [
-      "To scan is to Exist.",
-      "Object (noun)\nA material thing that can be seen and touched.",
-      "Access denied without device",
-      "Every QR code is a gate",
-      "Wax layers = invisible barriers",
-      "Public space, private interface",
-      "To be seen, first be scanned",
-      "The irony: critiquing gates with gates",
-      "Smartness = selective blindness",
-      "Your data, their profit",
-      "Convenience costs community",
-      "Algorithm (noun)\nA rule that decides who belongs",
-      "Touch the wax, feel the weight of exclusion",
-      "Design for all, not just the app-enabled",
-      "End of transmission."
-    ];
-
-    // Remove camera permission check since we're not using camera
     document.querySelector('a-scene').addEventListener('loaded', function() {
-      // Scene loaded but hidden
+      checkCameraPermission();
     });
+
+    function checkCameraPermission() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showError('Camera not supported on this device');
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+          stream.getTracks().forEach(track => track.stop());
+        })
+        .catch(function(error) {
+          showError('Camera access denied');
+        });
+    }
 
     function showError(message) {
       const errorElement = document.getElementById('errorMsg');
@@ -182,8 +164,9 @@
       errorElement.style.display = 'block';
     }
 
-    // Add click event to the pulse circle
-    document.getElementById('pulseCircle').addEventListener('click', placeARContent);
+    document.getElementById('tapTarget').addEventListener('click', function() {
+      placeARContent();
+    });
 
     let touchStartTime = 0;
     document.addEventListener('touchstart', function() {
@@ -198,9 +181,8 @@
 
     function placeARContent() {
       if (isARPlaced) return;
-      
       const arContent = document.getElementById('arContent');
-      arContent.style.display = 'block';
+      arContent.setAttribute('visible', 'true');
       document.getElementById('pulseCircle').style.display = 'none';
       isARPlaced = true;
       updateInstructions('Data unencrypted, Move your device to explore');
@@ -210,32 +192,45 @@
     function startTextAnimation() {
       if (textAnimationComplete) return;
 
-      const textDisplay = document.getElementById('textDisplay');
-      let delay = 0;
+      const mainText = document.getElementById('mainText');
+      const secondText = document.getElementById('secondText');
+      const thirdText = document.getElementById('thirdText');
+      const fourthText = document.getElementById('fourthText');
+      const fifthText = document.getElementById('fifthText');
+      const sixthText = document.getElementById('sixthText');
+      const seventhText = document.getElementById('seventhText');
+      const eighthText = document.getElementById('eighthText');
 
-      texts.forEach((text, index) => {
-        setTimeout(() => {
-          textDisplay.innerHTML = text.replace(/\n/g, '<br>');
-          if (index === texts.length - 1) {
-            textAnimationComplete = true;
-          }
-        }, delay);
-        delay += index === 0 ? 7000 : 5000; // First text shows longer
-      });
+      let delay = 7000; // First switch
+
+      setTimeout(() => { mainText.setAttribute('visible', 'false'); secondText.setAttribute('visible', 'true'); }, delay);
+      delay += 5000;
+      setTimeout(() => { secondText.setAttribute('visible', 'false'); thirdText.setAttribute('visible', 'true'); }, delay);
+      delay += 5000;
+      setTimeout(() => { thirdText.setAttribute('visible', 'false'); fourthText.setAttribute('visible', 'true'); }, delay);
+      delay += 5000;
+      setTimeout(() => { fourthText.setAttribute('visible', 'false'); fifthText.setAttribute('visible', 'true'); }, delay);
+      delay += 5000;
+      setTimeout(() => { fifthText.setAttribute('visible', 'false'); sixthText.setAttribute('visible', 'true'); }, delay);
+      delay += 5000;
+      setTimeout(() => { sixthText.setAttribute('visible', 'false'); seventhText.setAttribute('visible', 'true'); }, delay);
+      delay += 5000;
+      setTimeout(() => { seventhText.setAttribute('visible', 'false'); eighthText.setAttribute('visible', 'true'); textAnimationComplete = true; }, delay);
     }
 
     document.getElementById('resetBtn').addEventListener('click', function() {
       const arContent = document.getElementById('arContent');
-      arContent.style.display = 'none';
+      arContent.setAttribute('visible', 'false');
       document.getElementById('pulseCircle').style.display = 'block';
 
-      const textDisplay = document.getElementById('textDisplay');
-      textDisplay.innerHTML = texts[0];
+      const texts = ['mainText', 'secondText', 'thirdText', 'fourthText', 'fifthText', 'sixthText', 'seventhText', 'eighthText'];
+      texts.forEach((id, index) => {
+        document.getElementById(id).setAttribute('visible', index === 0);
+      });
 
       isARPlaced = false;
       textAnimationComplete = false;
-      currentTextIndex = 0;
-      updateInstructions('Tap the circle to begin');
+      updateInstructions('Point camera not too close to object');
     });
 
     function updateInstructions(text) {
@@ -248,19 +243,22 @@
     if (qrId) { console.log('Launched from QR code:', qrId); }
 
     function customizeExperience() {
-      const textDisplay = document.getElementById('textDisplay');
+      const textLabel = document.getElementById('mainText');
       switch(experience) {
         case 'demo1':
-          textDisplay.innerHTML = 'Demo 1';
-          updateInstructions('Demo 1: Tap the circle to begin');
+          textLabel.setAttribute('value', 'Demo 1');
+          textLabel.setAttribute('color', '#FF6B6B');
+          updateInstructions('Demo 1: Point camera to find surfaces');
           break;
         case 'demo2':
-          textDisplay.innerHTML = 'Demo 2';
-          updateInstructions('Demo 2: Tap the circle to begin');
+          textLabel.setAttribute('value', 'Demo 2');
+          textLabel.setAttribute('color', '#4ECDC4');
+          updateInstructions('Demo 2: Point camera to find surfaces');
           break;
         case 'museum':
-          textDisplay.innerHTML = 'Museum Guide';
-          updateInstructions('Museum: Tap the circle to begin');
+          textLabel.setAttribute('value', 'Museum Guide');
+          textLabel.setAttribute('color', '#45B7D1');
+          updateInstructions('Museum: Point camera to find surfaces');
           break;
       }
     }
